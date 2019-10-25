@@ -1,4 +1,5 @@
 FROM buildpack-deps:disco
+USER ROOT
 
 ### base ###
 RUN yes | unminimize \
@@ -85,11 +86,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 # PHP language server is installed by theia-php-extension
 
-### Gitpod user (2) ###
-USER gitpod
-# use sudo so that user does not get sudo usage info on (the first) login
-RUN sudo echo "Running 'sudo' for Gitpod: success"
-
 ### Homebrew ###
 RUN mkdir ~/.cache && sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
 ENV PATH="$PATH:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin/"
@@ -97,10 +93,10 @@ ENV MANPATH="$MANPATH:/home/linuxbrew/.linuxbrew/share/man"
 ENV INFOPATH="$INFOPATH:/home/linuxbrew/.linuxbrew/share/info"
 
 ### CMake ###
-RUN sudo apt-get remove -y cmake && brew install cmake
+RUN apt-get remove -y cmake && brew install cmake
 
 ### Go ###
-ENV GO_VERSION=1.12 \
+ENV GO_VERSION=1.13 \
     GOPATH=$HOME/go-packages \
     GOROOT=$HOME/go
 ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
@@ -188,21 +184,6 @@ RUN curl -fsSL https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-ins
 # ENV PYTHONUSERBASE=/workspace/.pip-modules \
 #    PIP_USER=yes
 
-### Ruby ###
-RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import - \
-    && curl -sSL https://rvm.io/pkuczynski.asc | gpg --import - \
-    && curl -fsSL https://get.rvm.io | bash -s stable \
-    && bash -lc " \
-        rvm requirements \
-        && rvm install 2.4 \
-        && rvm install 2.5 \
-        && rvm install 2.6 \
-        && rvm use 2.6 --default \
-        && rvm rubygems current \
-        && gem install bundler --no-document \
-        && gem install solargraph --no-document"
-ENV GEM_HOME=/workspace/.rvm
-
 ### Rust ###
 RUN sudo apt-get update \
     && DEBIAN_FRONTEND=noninteractive sudo apt-get install -yq \
@@ -219,6 +200,8 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y \
     && .cargo/bin/rustup completions bash | sudo tee /etc/bash_completion.d/rustup.bash-completion > /dev/null \
     && .cargo/bin/rustup target add x86_64-unknown-linux-musl
 RUN bash -lc "cargo install cargo-watch"
+
+ENV PTAH=/home/gitpod/.cargo/bin:$PATH
 
 ### checks ###
 # no root-owned files in the home directory
