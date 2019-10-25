@@ -1,5 +1,5 @@
 FROM buildpack-deps:disco
-USER ROOT
+USER root
 
 ### base ###
 RUN yes | unminimize \
